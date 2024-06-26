@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XO Game</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="message">Waiting for players...</div>
+  <div class="board">
+    <div class="row">
+      <div class="cell" data-row="0" data-col="0"></div>
+      <div class="cell" data-row="0" data-col="1"></div>
+      <div class="cell" data-row="0" data-col="2"></div>
+    </div>
+    <div class="row">
+      <div class="cell" data-row="1" data-col="0"></div>
+      <div class="cell" data-row="1" data-col="1"></div>
+      <div class="cell" data-row="1" data-col="2"></div>
+    </div>
+    <div class="row">
+      <div class="cell" data-row="2" data-col="0"></div>
+      <div class="cell" data-row="2" data-col="1"></div>
+      <div class="cell" data-row="2" data-col="2"></div>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
