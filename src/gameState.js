@@ -13,7 +13,6 @@ const startingGameState = () => {
     ['', '', ''],
     ['', '', ''],
   ];
-  players = {};
   currentPlayer = 'X';
 };
 
@@ -28,13 +27,13 @@ const switchPlayer = () => {
 const getBoard = () => board;
 const getCurrentPlayer = () => currentPlayer;
 
-const printBoard = () => {
+const printBoard = (boardToPrint) => {
   console.log('\nCurrent Board:');
   console.log('-------------');
-  for (let i = 0; i < board.length; i++) {
+  for (let i = 0; i < boardToPrint.length; i++) {
     let row = '|';
-    for (let j = 0; j < board[i].length; j++) {
-      row += board[i][j] === '' ? ' ' : board[i][j];
+    for (let j = 0; j < boardToPrint[i].length; j++) {
+      row += boardToPrint[i][j] === '' ? ' ' : boardToPrint[i][j];
       row += '|';
     }
     console.log(row);
@@ -55,6 +54,7 @@ const promptMove = (callback) => {
     const cellIndex = parseInt(input, 10) - 1;
     if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex > 8) {
       console.log('Invalid input. Enter a number between 1 and 9.');
+      rl.close();
       promptMove(callback);
     } else {
       const row = Math.floor(cellIndex / 3);
