@@ -1,51 +1,78 @@
 const http = require('http');
 const socketIo = require('socket.io');
-const { getBoard, players, getCurrentPlayer, switchPlayer, updateBoard, startingGameState, printBoard } = require('./src/gameState');
-const { resetGame, checkForDraw, checkWinner } = require('./src/gameLogic');
+const {
+  startingGameState, updateBoard, switchPlayer, getBoard, printBoard
+} = require('./src/gameState');
+const {
+  resetGame, checkForDraw, checkWinner
+} = require('./src/gameLogic');
 
 const server = http.createServer();
 const io = socketIo(server);
 
-let gameActive = false;
+let games = {};
 
 io.on('connection', (socket) => {
-  if (Object.keys(players).length >= 2) {
-    console.log('Game is full');
-    socket.emit('full', 'Game is full');
-    return;
-  }
+  socket.on('joinGame', () => {
+    let gameId;
 
-  const symbol = Object.keys(players).length === 0 ? 'X' : 'O';
-  players[socket.id] = symbol;
-  console.log(`Player ${socket.id} assigned symbol ${symbol}`);
-  socket.emit('assign', symbol);
+   
+    for (const id in games) {
+      if (Object.keys(games[id].players).length < 2) {
+        gameId = id;
+        break;
+      }
+    }
 
-  if (!gameActive && Object.keys(players).length === 2) {
-    console.log('Starting game...');
-    startingGameState();
-    gameActive = true;
-    io.emit('updateBoard', { board: getBoard(), currentPlayer: getCurrentPlayer() });
-    printBoard(getBoard());
-  }
+    if (!gameId) {
+      gameId = Math.random().toString(36).substr(2, 9); 
+      games[gameId] = {
+        players: {},
+        board: [
+          ['', '', ''],
+          ['', '', ''],
+          ['', '', ''],
+        ],
+        currentPlayer: 'X',
+        gameActive: false,
+      };
+    }
 
-  socket.on('move', ({ row, col }) => {
-    if (getBoard()[row][col] === '' && players[socket.id] === getCurrentPlayer()) {
-      updateBoard(row, col, players[socket.id]);
-      printBoard(getBoard());
-      const winner = checkWinner();
+    const game = games[gameId];
+    const symbol = Object.keys(game.players).length === 0 ? 'X' : 'O';
+    game.players[socket.id] = symbol;
+    socket.join(gameId);
+    console.log(`Player ${socket.id} assigned symbol ${symbol} in game ${gameId}`);
+    socket.emit('assign', { symbol, gameId });
+
+    if (!game.gameActive && Object.keys(game.players).length === 2) {
+      console.log(`Starting game ${gameId}...`);
+      startingGameState(gameId); 
+      game.gameActive = true;
+      io.to(gameId).emit('updateBoard', { gameId, board: game.board, currentPlayer: game.currentPlayer });
+      printBoard(gameId); 
+    }
+  });
+
+  socket.on('move', ({ gameId, row, col }) => {
+    const game = games[gameId];
+    if (game && game.board[row][col] === '' && game.players[socket.id] === game.currentPlayer) {
+      updateBoard(gameId, row, col, game.currentPlayer);
+      printBoard(gameId);
+      const winner = checkWinner(gameId);
       if (winner) {
-        io.emit('win', winner);
-        resetGame();
-        gameActive = false;
-        io.emit('reset', getBoard());
-      } else if (checkForDraw()) {
-        io.emit('draw');
-        resetGame();
-        gameActive = false;
-        io.emit('reset', getBoard());
+        io.to(gameId).emit('win', winner);
+        resetGame(gameId); 
+        game.gameActive = false;
+        io.to(gameId).emit('reset', { gameId, board: getBoard(gameId) }); 
+      } else if (checkForDraw(gameId)) {
+        io.to(gameId).emit('draw');
+        resetGame(gameId);
+        game.gameActive = false;
+        io.to(gameId).emit('reset', { gameId, board: getBoard(gameId) }); 
       } else {
-        switchPlayer();
-        io.emit('updateBoard', { board: getBoard(), currentPlayer: getCurrentPlayer() });
+        switchPlayer(gameId);
+        io.to(gameId).emit('updateBoard', { gameId, board: game.board, currentPlayer: game.currentPlayer });
       }
     } else {
       socket.emit('invalidMove', 'Cell is already taken or not your turn');
@@ -53,12 +80,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    delete players[socket.id];
-    if (Object.keys(players).length === 0) {
-      console.log('No players left. Resetting game...');
-      resetGame();
-      io.emit('reset', getBoard());
-      gameActive = false;
+    for (const gameId in games) {
+      if (games[gameId].players[socket.id]) {
+        delete games[gameId].players[socket.id];
+        if (Object.keys(games[gameId].players).length === 0) {
+          console.log(`No players left in game ${gameId}. Resetting game...`);
+          resetGame(gameId); 
+          io.to(gameId).emit('reset', { gameId, board: getBoard(gameId) }); 
+          games[gameId].gameActive = false;
+          delete games[gameId];
+        }
+      }
     }
   });
 });

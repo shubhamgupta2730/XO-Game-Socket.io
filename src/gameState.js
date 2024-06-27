@@ -1,77 +1,92 @@
-let board = [
-  ['', '', ''],
-  ['', '', ''],
-  ['', '', ''],
-];
+const readline = require('readline');
 
-let players = {};
-let currentPlayer = 'X';
+let games = {};
 
-const startingGameState = () => {
-  board = [
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', ''],
-  ];
-  currentPlayer = 'X';
+const startingGameState = (gameId) => {
+  games[gameId] = {
+    board: [
+      ['', '', ''],
+      ['', '', ''],
+      ['', '', ''],
+    ],
+    players: {},
+    currentPlayer: 'X',
+  };
 };
 
-const updateBoard = (row, col, player) => {
-  board[row][col] = player;
-};
-
-const switchPlayer = () => {
-  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-};
-
-const getBoard = () => board;
-const getCurrentPlayer = () => currentPlayer;
-
-const printBoard = (boardToPrint) => {
-  console.log('\nCurrent Board:');
-  console.log('-------------');
-  for (let i = 0; i < boardToPrint.length; i++) {
-    let row = '|';
-    for (let j = 0; j < boardToPrint[i].length; j++) {
-      row += boardToPrint[i][j] === '' ? ' ' : boardToPrint[i][j];
-      row += '|';
-    }
-    console.log(row);
-    console.log('-------------');
+const updateBoard = (gameId, row, col, player) => {
+  if (games[gameId]) {
+    games[gameId].board[row][col] = player;
+  } else {
+    console.error(`Game ${gameId} does not exist.`);
   }
 };
 
-const promptMove = (callback) => {
-  const readline = require('readline');
+const switchPlayer = (gameId) => {
+  if (games[gameId]) {
+    games[gameId].currentPlayer = games[gameId].currentPlayer === 'X' ? 'O' : 'X';
+  } else {
+    console.error(`Game ${gameId} does not exist.`);
+  }
+};
+
+const getBoard = (gameId) => {
+  if (games[gameId]) {
+    return games[gameId].board;
+  } else {
+    console.error(`Game ${gameId} does not exist.`);
+    return null;
+  }
+};
+
+const getCurrentPlayer = (gameId) => {
+  if (games[gameId]) {
+    return games[gameId].currentPlayer;
+  } else {
+    console.error(`Game ${gameId} does not exist.`);
+    return null; 
+  }
+};
+
+const printBoard = (gameId) => {
+  if (games[gameId] && games[gameId].board) {
+    const boardToPrint = games[gameId].board;
+    console.log(`\nCurrent Board for Game ${gameId}:`);
+    console.log('-------------');
+    for (let i = 0; i < boardToPrint.length; i++) {
+      let row = '|';
+      for (let j = 0; j < boardToPrint[i].length; j++) {
+        row += boardToPrint[i][j] === '' ? ' ' : boardToPrint[i][j];
+        row += '|';
+      }
+      console.log(row);
+      console.log('-------------');
+    }
+  } else {
+    console.error(`Unable to print board for Game ${gameId}.`);
+  }
+};
+
+const promptMove = (gameId, callback) => {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
-  const currentPlayer = getCurrentPlayer();
-  console.log(`Current player: ${currentPlayer}`);
-  rl.question(`Enter cell number (1-9, starting from top-left corner): `, (input) => {
-    const cellIndex = parseInt(input, 10) - 1;
-    if (!Number.isInteger(cellIndex) || cellIndex < 0 || cellIndex > 8) {
-      console.log('Invalid input. Enter a number between 1 and 9.');
-      rl.close();
-      promptMove(callback);
-    } else {
-      const row = Math.floor(cellIndex / 3);
-      const col = cellIndex % 3;
-      rl.close();
-      callback(row, col);
-    }
+  rl.question('Enter your move (row and column): ', (move) => {
+    const [row, col] = move.split(' ').map(Number);
+    rl.close();
+    callback(row, col);
   });
 };
 
 module.exports = {
+  startingGameState,
+  updateBoard,
+  switchPlayer,
   getBoard,
   getCurrentPlayer,
-  switchPlayer,
-  updateBoard,
-  startingGameState,
   printBoard,
   promptMove,
-  players,
+  games 
 };
