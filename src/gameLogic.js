@@ -7,27 +7,43 @@ const resetGame = () => {
 const checkWinner = () => {
   const board = getBoard();
   const winningPositions = [
-    // Rows
+    // Rows positions : 
     [[0, 0], [0, 1], [0, 2]],
     [[1, 0], [1, 1], [1, 2]],
     [[2, 0], [2, 1], [2, 2]],
-    // Columns
+
+    // Columns positions
     [[0, 0], [1, 0], [2, 0]],
     [[0, 1], [1, 1], [2, 1]],
     [[0, 2], [1, 2], [2, 2]],
-    // Diagonals
+
+    // Diagonals positions
     [[0, 0], [1, 1], [2, 2]],
     [[0, 2], [1, 1], [2, 0]],
   ];
 
+  // Check each winning position
   for (const positions of winningPositions) {
     const [a, b, c] = positions;
-    if (board[a[0]][a[1]] && board[a[0]][a[1]] === board[b[0]][b[1]] && board[a[0]][a[1]] === board[c[0]][c[1]]) {
-      return board[a[0]][a[1]];
+    const [rowA, colA] = a;
+    const [rowB, colB] = b;
+    const [rowC, colC] = c;
+
+    // Checking each position for(x or o)
+    if (
+      board[rowA][colA] &&
+      board[rowA][colA] === board[rowB][colB] &&
+      board[rowA][colA] === board[rowC][colC]
+    ) {
+      //returns either x or o winner: 
+      return board[rowA][colA]; 
     }
   }
-  return null;
+
+  return null; 
 };
+
+
 
 const checkForDraw = () => {
   const board = getBoard();
