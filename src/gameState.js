@@ -17,18 +17,26 @@ const startingGameState = (gameId) => {
 const updateBoard = (gameId, row, col, player) => {
   if (games[gameId]) {
     games[gameId].board[row][col] = player;
+    console.log(`Updated board for Game ${gameId}:`);
+    console.log(games[gameId].board);
   } else {
     console.error(`Game ${gameId} does not exist.`);
   }
 };
 
+
 const switchPlayer = (gameId) => {
   if (games[gameId]) {
-    games[gameId].currentPlayer = games[gameId].currentPlayer === 'X' ? 'O' : 'X';
+    const currentPlayer = games[gameId].currentPlayer;
+    games[gameId].currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    console.log(`Switched player. Current player is now ${games[gameId].currentPlayer}`);
+    return games[gameId].currentPlayer; 
   } else {
     console.error(`Game ${gameId} does not exist.`);
+    return null;
   }
 };
+
 
 const getBoard = (gameId) => {
   if (games[gameId]) {
@@ -76,9 +84,11 @@ const promptMove = (gameId, callback) => {
   rl.question('Enter your move (row and column): ', (move) => {
     const [row, col] = move.split(' ').map(Number);
     rl.close();
+    console.log(`Received move from player: row ${row}, column ${col}`);
     callback(row, col);
   });
 };
+
 
 module.exports = {
   startingGameState,
